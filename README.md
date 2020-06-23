@@ -1,5 +1,5 @@
 # SharpDllLoader
-A simple C# executable that invokes an arbitrary method of an arbitrary C# DLL. **The project is useful to analyze malicious C# DLL through the popular tool DNSpy.** DNSpy does not allow to native debug a DLL because of the absence of a standard entrypoint. So you can debug the SharpDllLoader executable with proper parameters to jump into the specified method of the DLL that you want dynamically analyze.
+A simple C# executable that invokes an arbitrary method of an arbitrary C# DLL. **The project is useful to analyze malicious C# DLL through the popular tool dnSpy.** dnSpy does not allow to native debug a DLL because of the absence of a standard entrypoint. So you can debug the SharpDllLoader executable with proper parameters to jump into the specified method of the DLL that you want dynamically analyze.
 
 ## Usage
 
@@ -8,8 +8,8 @@ A simple C# executable that invokes an arbitrary method of an arbitrary C# DLL. 
 `-n` and `-a ` parameters are optionals. 
 
 ## Example of usage
-Analyzing a malware you are facing with a DLL written in C# easily inspectable using some commons tools like DNSpy. You know that the malware invokes (i.e. through a previous Powershell stage) the method `Bypass` of the class `Amsi`, but you're not able to debug the method to undestand what it does.
-So, open SharpDllLoader.exe in your DNSpy instance, insert the correct parameters into Arguments field and select `Stop At: Entrypoint`.
+Analyzing a malware you are faced with a DLL written in C# easily inspectable using some common tools like dnSpy. You know that the malware invokes (i.e. through a previous Powershell stage) the method `Bypass` of the class `Amsi`, but you're not able to debug the method to undestand what it does.
+So, open SharpDllLoader.exe in your dnSpy instance, insert the correct parameters into Arguments field and select `Stop At: Entrypoint`.
 
 [![](https://github.com/hexfati/SharpDllLoader/raw/master/images/1.PNG)](https://github.com/hexfati/SharpDllLoader/raw/master/images/1.PNG)
 
