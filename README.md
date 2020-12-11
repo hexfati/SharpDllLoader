@@ -5,7 +5,7 @@ A simple C# executable that invokes an arbitrary method of an arbitrary C# DLL. 
 
 `SharpDllLoader.exe -d DLL_PATH [-n NAMESPACE] -c DLL_CLASS -m METHOD [-a "ARG1 ARG2"]`
 
-`-n` and `-a ` parameters are optionals. 
+`-n` and `-a ` parameters are optional. 
 
 ## Example of usage
 Analyzing a malware you are faced with a DLL written in C# easily inspectable using some common tools like dnSpy. You know that the malware invokes (i.e. through a previous Powershell stage) the method `Bypass` of the class `Amsi`, but you're not able to debug the method to undestand what it does.
