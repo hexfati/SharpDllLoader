@@ -15,11 +15,11 @@ So, open SharpDllLoader.exe in your dnSpy instance, insert the correct parameter
 
 This is the entrypoint of the exe.
 
-[![](https://github.com/hexfati/SharpDllLoader/raw/master/images/2.PNG)](https://github.com/hexfati/SharpDllLoader/raw/master/images/2.PNG)
+![](images/2.png)
 
 Set a breakpoint on the illustrated instruction, or step over using F10 until you reach this instruction. Then click F11 to step into the invocation.
 
-[![](https://github.com/hexfati/SharpDllLoader/raw/master/images/3.PNG)](https://github.com/hexfati/SharpDllLoader/raw/master/images/3.PNG)
+![](images/3.png)
 
 F11 again
 
