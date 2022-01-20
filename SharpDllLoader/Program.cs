@@ -29,88 +29,130 @@ namespace SharpDllLoader
         [STAThread]
         static void Main(string[] args)
         {
-            ParserResult<Options> result = Parser.Default.ParseArguments<Options>(args);
+            Options options = ParseArguments(args);
+            Type type = GetTypeFromAssembly(options.Dll, options.Namespace, options.Class);
+            object class_obj = GetClass(type);
+            MethodInfo methodObj = GetMethod(type, options.Method);
+            object[] paramArray = MapParams(methodObj, options.Args);
+            methodObj.Invoke(class_obj, paramArray);
+        }
+
+        private static Options ParseArguments(string[] arguments)
+        {
+            ParserResult<Options> result = Parser.Default.ParseArguments<Options>(arguments);
             if (result.Tag == ParserResultType.Parsed)
             {
-                var options = ((Parsed<Options>)result).Value;
-                string filepath = options.Dll;
-                string ns = options.Namespace;
-                string c = options.Class;
-                string m = options.Method;
-                string[] arguments = null;
+                return ((Parsed<Options>)result).Value;
+            }
+            else
+            {
+                System.Windows.Forms.MessageBox.Show("No arguments provided");
+                System.Environment.Exit(1);
+                return null;
+            }
+        }
 
-                if(options.Args != null) { 
-                    arguments = options.Args.Split();
-                }
+        private static Type GetTypeFromAssembly(string filepath, string nspace, string classname)
+        {
+            Assembly assembly = Assembly.LoadFile(filepath);
+            Type type = null;
+            if (nspace == null)
+            {
+                type = assembly.GetType(classname);
+            }
+            else
+            {
+                type = assembly.GetType(nspace + "." + classname);
+            }
 
-                Assembly assembly = Assembly.LoadFile(filepath);
-                Type type = null;
-                if (ns == null)
-                {
-                    type = assembly.GetType(c);
-                }
-                else
-                {
-                    type = assembly.GetType(ns + "." + c);
-                }
+            if (type != null)
+            {
+                return type;
+            }
+            else
+            {
+                System.Windows.Forms.MessageBox.Show("Class or namespace not found");
+                System.Environment.Exit(1);
+                return null;
+            }
+        }
 
-                if (type != null)
+        private static object GetClass(Type type)
+        {
+            object classObj = null;
+            if (type.IsAbstract == false)
+            {
+                classObj = Activator.CreateInstance(type);
+            }
+            return classObj;
+        }
+
+        private static MethodInfo GetMethod(Type type, string methodname)
+        {
+            MethodInfo methodObj = type.GetMethod(methodname);
+            if (methodObj != null)
+            {
+                return methodObj;
+            }
+            else
+            {
+                System.Windows.Forms.MessageBox.Show("Method not found");
+                System.Environment.Exit(1);
+                return null;
+            }
+        }
+
+        private static object[] MapParams(MethodInfo methodObj, string argumentString)
+        {
+            string[] arguments = null;
+
+            if (argumentString != null)
+            {
+                arguments = argumentString.Split();
+            }
+
+            ParameterInfo[] declaredparams = methodObj.GetParameters();
+            object[] tmp = null;
+            if (declaredparams.Length > 0)
+            {
+                if (arguments != null && declaredparams.Length == arguments.Length)
                 {
-                    var cl = Activator.CreateInstance(type);
-                    var method_obj = type.GetMethod(m);
-                    if (method_obj != null)
+                    tmp = new object[arguments.Length];
+                    for (int i = 0; i < arguments.Length; i++)
                     {
-                        ParameterInfo[] declaredparams = method_obj.GetParameters();
-                        object[] tmp = null;
-                        if (declaredparams.Length > 0) { 
-                            if(arguments != null && declaredparams.Length == arguments.Length)
+                        if (declaredparams[i].ParameterType.ToString() == "System.Int32")
+                        {
+                            int number;
+                            bool flag = Int32.TryParse((string)arguments[i], out number);
+                            if (flag)
                             {
-                                tmp = new object[arguments.Length];
-                                for (int i=0; i<arguments.Length; i++)
-                                {                                
-                                    if(declaredparams[i].ParameterType.ToString() == "System.Int32")
-                                    {
-                                        int number;
-                                        bool flag = Int32.TryParse((string) arguments[i], out number);
-                                        if (flag) {
-                                            tmp[i] =  number;
-                                        }
-                                        else
-                                        {
-                                            Console.WriteLine("Arguments type mismatch!");
-                                            System.Environment.Exit(1);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // assumes it is a string
-                                        tmp[i] = arguments[i];
-                                    }
-                                }
+                                tmp[i] = number;
                             }
-                            else {
-                                Console.WriteLine("Arguments mismatch!");
+                            else
+                            {
+                                Console.WriteLine("Arguments type mismatch!");
                                 System.Environment.Exit(1);
                             }
                         }
-
-                        method_obj.Invoke(cl, tmp);
+                        else
+                        {
+                            // assumes it is a string
+                            tmp[i] = arguments[i];
+                        }
                     }
-                    else
-                    {
-                        Console.WriteLine("Method not found");
-                    }
+                    return tmp;
                 }
                 else
                 {
-                    Console.WriteLine("Class or namespace not found");
+                    System.Windows.Forms.MessageBox.Show("Arguments mismatch");
+                    System.Environment.Exit(1);
+                    return null;
                 }
             }
             else
             {
-                System.Environment.Exit(1);
+                return null;
             }
-
         }
     }
 }
