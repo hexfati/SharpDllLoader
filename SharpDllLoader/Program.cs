@@ -1,6 +1,7 @@
 ﻿using System;
 using CommandLine;
 using System.Reflection;
+using System.Collections;
 
 namespace SharpDllLoader
 {
@@ -19,8 +20,14 @@ namespace SharpDllLoader
         [Option('m', "method", Required = true, HelpText = "Method to invoke")]
         public string Method { get; set; }
 
-        [Option('a', "args", Required = false, HelpText = "Method to invoke")]
-        public string Args { get; set; }
+        [Option('s', "static", Required = false, Default = false, HelpText = "StaticMethod flag")]
+        public bool IsStaticMethod { get; set; }
+
+        [Option("margs", Required = false, HelpText = "Method args separated by space")]
+        public string MethodArgs { get; set; }
+
+        [Option("cargs", Required = false, HelpText = "Class args separated by space")]
+        public string ClassArgs { get; set; }
     }
 
     static class Program
@@ -29,12 +36,28 @@ namespace SharpDllLoader
         [STAThread]
         static void Main(string[] args)
         {
+            
             Options options = ParseArguments(args);
             Type type = GetTypeFromAssembly(options.Dll, options.Namespace, options.Class);
-            object class_obj = GetClass(type);
+            bool IsStaticMethod = options.IsStaticMethod;
+            object class_obj = null;
+            if (IsStaticMethod == false)
+            {   
+                if (options.ClassArgs == null)
+                {
+                    class_obj = GetClass(type);
+                }
+                else
+                {
+                    ParameterInfo[] declaredConstructorParams = type.GetConstructors()[0].GetParameters();
+                    object[] classParamArray = MapParams(declaredConstructorParams, options.ClassArgs);
+                    class_obj = GetClass(type, classParamArray);
+                }
+            }
             MethodInfo methodObj = GetMethod(type, options.Method);
-            object[] paramArray = MapParams(methodObj, options.Args);
-            methodObj.Invoke(class_obj, paramArray);
+            ParameterInfo[] declaredMethodParams = methodObj.GetParameters();
+            object[] methodParamArray = MapParams(declaredMethodParams, options.MethodArgs);
+            methodObj.Invoke(class_obj, methodParamArray);
         }
 
         private static Options ParseArguments(string[] arguments)
@@ -46,7 +69,11 @@ namespace SharpDllLoader
             }
             else
             {
-                System.Windows.Forms.MessageBox.Show("No arguments provided");
+                IEnumerator enumerator = result.Errors.GetEnumerator();
+                enumerator.MoveNext();
+                Error currentError = (Error) enumerator.Current;
+                String error = currentError.ToString();
+                System.Windows.Forms.MessageBox.Show("Error parsing argument: " + error);
                 System.Environment.Exit(1);
                 return null;
             }
@@ -76,7 +103,6 @@ namespace SharpDllLoader
                 return null;
             }
         }
-
         private static object GetClass(Type type)
         {
             object classObj = null;
@@ -86,6 +112,17 @@ namespace SharpDllLoader
             }
             return classObj;
         }
+
+        private static object GetClass(Type type, object[] classParamArray)
+        {
+            object classObj = null;
+            if (type.IsAbstract == false)
+            {
+                classObj = Activator.CreateInstance(type, classParamArray);
+            }
+            return classObj;
+        }
+        
 
         private static MethodInfo GetMethod(Type type, string methodname)
         {
@@ -102,7 +139,7 @@ namespace SharpDllLoader
             }
         }
 
-        private static object[] MapParams(MethodInfo methodObj, string argumentString)
+        private static object[] MapParams(ParameterInfo[] declaredparams, string argumentString)
         {
             string[] arguments = null;
 
@@ -111,7 +148,6 @@ namespace SharpDllLoader
                 arguments = argumentString.Split();
             }
 
-            ParameterInfo[] declaredparams = methodObj.GetParameters();
             object[] tmp = null;
             if (declaredparams.Length > 0)
             {
